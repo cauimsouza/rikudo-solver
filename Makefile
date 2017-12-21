@@ -4,7 +4,7 @@ LDFLAGS=-lcryptominisat5
 SOURCES=main.cpp graph.cpp
 DEPS=graph.h
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=rikudo
+EXECUTABLE=RikudoSolver
 
 all: $(SOURCES) $(EXECUTABLE)
 
