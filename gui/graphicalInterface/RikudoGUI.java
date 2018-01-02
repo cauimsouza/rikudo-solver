@@ -1,19 +1,29 @@
 import java.awt.Color;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class RikudoGUI {
 	private final int windowSize = 1024;
 	private final Color startColor = Color.BLUE;
 	private final Color boundaryColor = Color.RED;
+	private final String graphFile = "../../graph/graph.txt";
+	private final String pathFile = "example.txt"; 
 	private HashMap<Integer, Axial> intToAxial;
 	private HashMap<Axial, Integer> axialToInt;
 	private ArrayList<LinkedList<Integer>> adjList;
 	private final static Axial[] neighbors = new Axial[]{
 			new Axial(1, 0), new Axial(0, 1), new Axial(-1, 0), new Axial(0, -1),
-			new Axial(1, 1), new Axial(-1, -1)}; 
+			new Axial(1, 1), new Axial(-1, -1)};
+	private LinkedList<Integer> path;
 	
 	public RikudoGUI() {
 		intToAxial = new HashMap<>();
@@ -26,11 +36,20 @@ public class RikudoGUI {
 		
 		addHexagons(img);
 		
-		LinkedList<Integer> path = new LinkedList<>();
-		path.add(0);
-		path.add(1);
-		path.add(2);
-		path.add(3);
+		//LinkedList<Integer> path = new LinkedList<>();
+		//path.add(0);
+		//path.add(1);
+		//path.add(2);
+		//path.add(3);
+		
+		writeGraph();
+		
+		try {
+			Process p = new ProcessBuilder("../../graph/RikudoSolver", graphFile).start();
+			TimeUnit.SECONDS.sleep(1);
+		}catch(Exception e) {}
+		
+		readPath();
 		printPath(img, path);
 		
 		new Image2dViewer(img);	
@@ -62,6 +81,40 @@ public class RikudoGUI {
 				adjList.get(n).add(neighborVertex);
 				adjList.get(neighborVertex).add(n);
 			}
+		}
+	}
+	
+	private void writeGraph() {
+		StringBuilder graphText = new StringBuilder();
+		
+		graphText.append(adjList.size() + "\n");
+		for(int u = 0; u < adjList.size(); u++) {
+			for(int v : adjList.get(u)) {
+				graphText.append(String.format("%d %d\n", u, v));
+			}
+		}
+		graphText.append(String.format("-1\n"));
+		graphText.append(String.format("3 1\n"));
+		try {
+			Files.write(Paths.get(graphFile), graphText.toString().getBytes());
+		}
+		catch(Exception e) {
+			System.out.println("Error writing graph to file " + graphFile);
+		}
+	}
+	
+	private void readPath() {
+		path = new LinkedList<>();
+		try {
+			File file = new File(pathFile);
+			Scanner sc = new Scanner(file);
+			
+			while(sc.hasNext()) {
+				path.add(sc.nextInt());
+			}
+		}
+		catch(Exception e) {
+			System.out.println("Error reading path from file " + pathFile);
 		}
 	}
 	

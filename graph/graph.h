@@ -45,6 +45,8 @@ private:
 public:
     explicit Graph(int n_vertices);
 
+    Graph(int n_vertices, std::ifstream &file);
+
     Graph(const std::vector< std::vector<int> >& adj_list);
 
     std::vector< std::vector<int> >& hamiltonian_path(int source,

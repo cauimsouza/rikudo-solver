@@ -5,6 +5,7 @@
 #include "graph.h"
 #include <climits>
 #include <utility>
+#include <fstream>
 
 int Graph::get_var_id(int ith, int vertex)
 {
@@ -54,6 +55,29 @@ Graph::Graph(int n_vertices)
         if (a < 0)
             break;
         std::cin >> b;
+
+        if(a >= n_vertices || b < 0 || b >= n_vertices)
+            throw "Invalid vertex index";
+
+        adj_list[a].push_back(b);
+    }
+}
+
+Graph::Graph(int n_vertices, std::ifstream &file)
+{
+    if(n_vertices <= 0)
+        throw "Number of vertices should be a positive integer.";
+
+    this->n_vertices = n_vertices;
+    adj_list.assign(static_cast<unsigned long>(n_vertices), std::vector<int>());
+
+    while (true)
+    {
+        int a, b;
+        file >> a;
+        if (a < 0)
+            break;
+        file >> b;
 
         if(a >= n_vertices || b < 0 || b >= n_vertices)
             throw "Invalid vertex index";

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "graph.h"
 
 void print_path(const std::vector<int>& path);
@@ -11,6 +12,17 @@ void print_path(const std::vector<int>& path){
     for(int i = 1; i < path.size(); i++)
         std::cout << " -> " << path[i];
     std::cout << "\n";
+}
+
+void print_path_file(const std::vector<int>& path){
+    std::ofstream myfile;
+    myfile.open ("example.txt");
+   
+    myfile << path[0] << "\n";
+    for(int i = 1; i < path.size(); i++)
+        myfile << path[i] << "\n";
+
+    myfile.close();    
 }
 
 void foo()
@@ -75,9 +87,38 @@ void count_path_between_corners(int n){
 
 }
 
-int main()
+void run_from_file(std::ifstream &file){
+    int n_vertices;
+    file >> n_vertices;
+
+    Graph graph(n_vertices, file);
+
+    int source, destination;
+    file >> source >> destination;
+
+    auto paths = graph.hamiltonian_path(source, destination, true, true);
+    for(auto path : paths){
+        print_path_file(path);
+        break;
+    }
+}
+
+int main(int argc, char const *argv[])
 {
     //count_path_between_corners(14);
+    std::ifstream file;
+    file.open(argv[1]);
+    if(!file){
+        std::cerr << "Unable to open file ";
+        exit(1);
+    }
+
+    run_from_file(file);
+    
+    file.close();
+
+    return 0;
+
     try{
         foo();
     }
