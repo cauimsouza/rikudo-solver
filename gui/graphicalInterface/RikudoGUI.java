@@ -7,7 +7,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -17,13 +19,13 @@ public class RikudoGUI {
 	private final Color boundaryColor = Color.RED;
 	private final String graphFile = "../../graph/graph.txt";
 	private final String pathFile = "example.txt"; 
-	private HashMap<Integer, Axial> intToAxial;
-	private HashMap<Axial, Integer> axialToInt;
-	private ArrayList<LinkedList<Integer>> adjList;
+	private Map<Integer, Axial> intToAxial;
+	private Map<Axial, Integer> axialToInt;
+	private List<List<Integer>> adjList;
 	private final static Axial[] neighbors = new Axial[]{
 			new Axial(1, 0), new Axial(0, 1), new Axial(-1, 0), new Axial(0, -1),
 			new Axial(1, 1), new Axial(-1, -1)};
-	private LinkedList<Integer> path;
+	private List<Integer> path;
 	
 	public RikudoGUI() {
 		intToAxial = new HashMap<>();
@@ -35,6 +37,7 @@ public class RikudoGUI {
 		Image2d img = new Image2d(windowSize);
 		
 		addHexagons(img);
+		//img.addText(new Text("chupa bixo", 50, 50));
 		
 		//LinkedList<Integer> path = new LinkedList<>();
 		//path.add(0);
@@ -51,6 +54,7 @@ public class RikudoGUI {
 		
 		readPath();
 		printPath(img, path);
+		printLabels(img, path);
 		
 		new Image2dViewer(img);	
 	}
@@ -94,6 +98,7 @@ public class RikudoGUI {
 			}
 		}
 		graphText.append(String.format("-1\n"));
+		
 		graphText.append(String.format("3 1\n"));
 		try {
 			Files.write(Paths.get(graphFile), graphText.toString().getBytes());
@@ -112,13 +117,15 @@ public class RikudoGUI {
 			while(sc.hasNext()) {
 				path.add(sc.nextInt());
 			}
+			
+			sc.close();
 		}
 		catch(Exception e) {
 			System.out.println("Error reading path from file " + pathFile);
 		}
 	}
 	
-	private void printPath(Image2d img, LinkedList<Integer> path) {
+	private void printPath(Image2d img, List<Integer> path) {
 		ListIterator<Integer> it = path.listIterator();
 		int prev = it.next();
 		while(it.hasNext()) {
@@ -129,6 +136,15 @@ public class RikudoGUI {
 			img.addSegment(prevOffset.x, prevOffset.y, curOffset.x, curOffset.y, 10, Color.BLACK);
 			
 			prev = cur;
+		}
+	}
+	
+	private void printLabels(Image2d img, List<Integer> vertices) {
+		ListIterator<Integer> it = path.listIterator();
+		while(it.hasNext()) {
+			int vertex = it.next();
+			Offset offset = intToAxial.get(vertex).toOffset(100);
+			img.addText(new Text(Integer.toString(vertex), (float) offset.x, (float) offset.y));
 		}
 	}
 }

@@ -11,6 +11,7 @@ public class Image2d {
 	private int height; // height of the image
 	private java.util.List<ColoredPolygon> coloredPolygons; // colored polygons in the image
 	private java.util.List<ColoredSegment> coloredSegments; // colored segments in the image
+	private java.util.List<Text> texts; // vertices' labels to write
 
 	// Constructor that instantiates an image of a specified width and height
 	public Image2d(int width, int height) {
@@ -18,6 +19,7 @@ public class Image2d {
 		this.height = height;
 		coloredPolygons = Collections.synchronizedList(new LinkedList<ColoredPolygon>());
 		coloredSegments = Collections.synchronizedList(new LinkedList<ColoredSegment>());
+		texts = Collections.synchronizedList(new LinkedList<Text>());
 	}
 
 	// Constructor that instantiates an image of a specified size
@@ -26,6 +28,7 @@ public class Image2d {
 		this.height = size;
 		coloredPolygons = Collections.synchronizedList(new LinkedList<ColoredPolygon>());
 		coloredSegments = Collections.synchronizedList(new LinkedList<ColoredSegment>());
+		texts = Collections.synchronizedList(new LinkedList<Text>());
 	}
 
 	// Return the width of the image
@@ -47,6 +50,11 @@ public class Image2d {
 	public java.util.List<ColoredSegment> getColoredSegments() {
 		return coloredSegments;
 	}
+	
+	// Return the text labels of the image
+	public java.util.List<Text> getTexts() {
+		return texts;
+	}
 
 	// Create polygon with xcoords, ycoords and colors insideColor, boundaryColor
 	public void addPolygon(int[] xcoords, int[] ycoords, Color insideColor, Color boundaryColor) {
@@ -66,6 +74,10 @@ public class Image2d {
 	// Create segment from (x1,y1) to (x2,y2) with some given width and color 
 	public void addSegment(int x1, int y1, int x2, int y2, int width, Color color) {
 		coloredSegments.add(new ColoredSegment(x1, y1, x2, y2, width, color));
+	}
+	
+	public void addText(Text text) {
+		texts.add(text);
 	}
 	
 	// Clear the picture
@@ -111,6 +123,9 @@ class Image2dComponent extends JComponent {
 		Dimension d = getSize();
 		g2.setBackground(Color.white);
 		g2.clearRect(0, 0, d.width, d.height);
+		
+		// set the font
+		g2.setFont(new Font("Courier", Font.PLAIN, 40));
 
 		// draw the polygons
 		synchronized (img.getColoredPolygons()) {
@@ -128,6 +143,13 @@ class Image2dComponent extends JComponent {
 				g2.setColor(coloredSegment.color);
 				g2.setStroke(new BasicStroke(coloredSegment.width));
 				g2.drawLine(coloredSegment.x1, coloredSegment.y1, coloredSegment.x2, coloredSegment.y2);
+			}
+		}
+		
+		// draw the texts
+		synchronized (img.getTexts()) {
+			for (Text text : img.getTexts()) {
+				g2.drawString(text.label, text.x - 15, text.y+10);
 			}
 		}
 	}
