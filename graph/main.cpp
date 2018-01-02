@@ -1,68 +1,44 @@
 #include <iostream>
 #include <fstream>
+#include <cstring>
 #include "graph.h"
 
-void print_path(const std::vector<int>& path);
-void foo();
-std::vector<int> more_than_k_paths(Graph &graph, int source, int destination, int k);
-void count_path_between_corners(int n);
 
-void print_path(const std::vector<int>& path){
-    std::cout << path[0];
+/**
+ * @brief Prints a path to the specified
+ * 
+ * @param path a vector of integers representing the vertices visited in order in the path
+ * @param ofile output stream to print the file
+ */
+void print_path(const std::vector<int>& path, std::ofstream &ofile){
+    ofile << path[0];
     for(int i = 1; i < path.size(); i++)
-        std::cout << " -> " << path[i];
-    std::cout << "\n";
+        ofile << " -> " << path[i];
+    ofile << "\n";
 }
 
-void print_path_file(const std::vector<int>& path){
-    std::ofstream myfile;
-    myfile.open ("example.txt");
-   
-    myfile << path[0] << "\n";
-    for(int i = 1; i < path.size(); i++)
-        myfile << path[i] << "\n";
-
-    myfile.close();    
-}
-
-void foo()
-{
-    int n_vertices;
-
-    std::cout << "Number of vertices: ";
-    std::cin >> n_vertices;
-
-    Graph graph(n_vertices);
-    std::cout << "Graph constructed\n";
-
-    while (true)
-    {
-        std::cout << "\nEnter the origin and the destination of the hamiltonian path: ";
-        int source, destination;
-        std::cin >> source;
-        if (source < 0)
-            break;
-        std::cin >> destination;
-
-        if (source != destination){
-            auto paths = graph.hamiltonian_path(source, destination, true, true);
-            std::cout << "Number of hamiltonian paths: " << paths.size() << "\n";
-            for(auto path : paths)  print_path(path);
-        }
-        else{
-            auto paths = graph.hamiltonian_cycle(true, true);
-            std::cout << "Number of hamiltonian cycles: " << paths.size() << "\n";
-            for(auto path : paths)  print_path(path);
-        }
-    }
-}
-
+/**
+ * @brief Checks if there exists more than k hamiltonian paths in the graph and returns any of them
+ * in the form of vector of integers in the positive case and and empty vector otherwise
+ * 
+ * @param graph graph where to look for paths  
+ * @param source source of the paths
+ * @param destination destination of the paths
+ * @param k minimum number of paths
+ * @return a hamiltonian path in graph, starting at vertex source and ending at vertex destination,
+ * if graph contains more than k hamiltonian paths, and returns an empty vector otherwise
+ */
 std::vector<int> more_than_k_paths(Graph &graph, int source, int destination, int k){
     auto paths = graph.hamiltonian_path(source, destination, true, true);
     if(paths.size() >= k)   return paths[0];
     return std::vector<int>();
 }
 
+/**
+ * @brief Count the number of hamiltonian paths between two opposite corners of a squared grid
+ * 
+ * @param n size of the squared grid
+ */
 void count_path_between_corners(int n){
     if(n <= 2){
         std::cout << n << std::endl;
@@ -87,49 +63,115 @@ void count_path_between_corners(int n){
 
 }
 
-void run_from_file(std::ifstream &file){
-    int n_vertices;
-    file >> n_vertices;
-
-    Graph graph(n_vertices, file);
+/**
+ * @brief Reads graph from file, tries to find hamiltonian paths in this graph
+ * and writes to specified output the existing hamiltonian paths
+ * 
+ * @param file input file from where to read the graph
+ * @param file output file where to write the hamiltonian paths
+ */
+void solves_rikudo(std::ifstream &ifile, std::ofstream &ofile){
+    Graph graph(ifile);
 
     int source, destination;
-    file >> source >> destination;
+    ifile >> source >> destination;
 
     auto paths = graph.hamiltonian_path(source, destination, true, true);
     for(auto path : paths){
-        print_path_file(path);
+        print_path(path, ofile);
         break;
     }
 }
 
+
+/**
+ * @brief Tests function hamiltonian_path with backtracking 
+ */
+void test1(){
+    const char* test_in_file = "tests/input/test1.txt";
+    const char* test_out_file = "tests/output/test1.txt";
+    
+    std::ifstream ifile;
+    std::ofstream ofile;
+
+    ifile.open(test_in_file);
+    ofile.open(test_out_file);
+
+    Graph graph(ifile);
+    ofile << "Graph constructed\n";
+   
+    int source, destination;
+    ifile >> source >> destination;
+
+    std::vector< std::pair<int,int> > map;
+    while(true){
+        int a, b;
+        ifile >> a;
+        if(a < 0)   break;
+        ifile >> b;
+        map.push_back(std::make_pair(a, b)); 
+    }
+    
+    std::vector< std::pair<int,int> > diamonds;
+    while(true){
+        int a, b;
+        ifile >> a;
+        if(a < 0)   break;
+        ifile >> b;
+        diamonds.push_back(std::make_pair(a, b)); 
+    }
+
+    bool sat, count;
+    ifile >> sat >> count; 
+
+    if (source != destination){
+        auto paths = graph.hamiltonian_path(source, destination, sat, count, map, diamonds);
+        ofile << "Number of hamiltonian paths: " << paths.size() << "\n";
+        for(auto path : paths)  print_path(path, ofile);
+    }
+    else{
+        auto paths = graph.hamiltonian_cycle(sat, count);
+        ofile << "Number of hamiltonian cycles: " << paths.size() << "\n";
+        for(auto path : paths)  print_path(path, ofile);
+    }
+    
+    ofile << "Test completed succesfully\n";
+
+    ifile.close();
+    ofile.close();
+}
+
 int main(int argc, char const *argv[])
 {
-    //count_path_between_corners(14);
-    std::ifstream file;
-    file.open(argv[1]);
-    if(!file){
-        std::cerr << "Unable to open file ";
-        exit(1);
+    if(argc == 1){
+        count_path_between_corners(14);
     }
+    else if(argc == 2){
+        if(strcmp("test1", argv[1]) == 0)        test1();
+    }
+    else if(argc == 3){
+        std::ifstream ifile;
+        std::ofstream ofile;
 
-    run_from_file(file);
-    
-    file.close();
+        ifile.open(argv[1]);
+        if(!ifile){
+            std::cerr << "Unable to open input file " << argv[1] << "\n";
+            exit(1);
+        }
 
-    return 0;
+        ofile.open(argv[2]);
+        if(!ofile){
+            std::cerr << "Unable to open output file " << argv[2] << "\n";
+            exit(1);
+        }
 
-    try{
-        foo();
+        solves_rikudo(ifile, ofile);
+
+        ifile.close();
+        ofile.close();
     }
-    catch(const char* str){
-        std::cout << "Error: ";
-        std::cout << str << "\n";
-    }
-    catch(...){
-        std::cout << "Unknown error\n";
-    }
-    
 
     return 0;
 }
+
+

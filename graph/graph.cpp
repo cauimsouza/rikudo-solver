@@ -7,12 +7,17 @@
 #include <utility>
 #include <fstream>
 
+//
 int Graph::get_var_id(int ith, int vertex)
 {
     return ith * n_vertices + vertex;
 }
 
-bool Graph::backtracking(int v, int n, int last, bool cycle, bool count)
+bool Graph::backtracking(int v,
+                         int n,
+                         int last,
+                         bool cycle,
+                         bool count)
 {
     visited[v] = true;
     path[n] = v;
@@ -39,32 +44,35 @@ bool Graph::backtracking(int v, int n, int last, bool cycle, bool count)
     return false;
 }
 
-Graph::Graph(int n_vertices)
-{
-    if(n_vertices <= 0)
-        throw "Number of vertices should be a positive integer.";
-
-    this->n_vertices = n_vertices;
-    adj_list.assign(static_cast<unsigned long>(n_vertices), std::vector<int>());
-
-    while (true)
-    {
-        std::cout << "Enter an edge or -1 to finish graph construction: ";
-        int a, b;
-        std::cin >> a;
-        if (a < 0)
-            break;
-        std::cin >> b;
-
-        if(a >= n_vertices || b < 0 || b >= n_vertices)
-            throw "Invalid vertex index";
-
-        adj_list[a].push_back(b);
+bool Graph::valid(const std::vector<int> &candidate,
+                  const std::vector< std::pair<int,int> >& map,
+                  const std::vector< std::pair<int,int> >& diamonds){
+    
+    for(auto pair : map){
+        int ith = pair.first;
+        int vertex = pair.second;
+        if(candidate[ith] != vertex)    return false;
     }
+
+    for(auto pair : diamonds){
+        int u = pair.first;
+        int v = pair.second;
+        for(size_t ith = 0; ith < candidate.size(); ith++)
+            if(candidate[ith] == u){
+                if(ith > 0 && candidate[ith-1] == v)    continue;
+                if(ith < candidate.size() - 1 && candidate[ith+1] == v) continue;
+                return false;
+            }
+    }
+
+    return true;
 }
 
-Graph::Graph(int n_vertices, std::ifstream &file)
+Graph::Graph(std::ifstream &file)
 {
+    int n_vertices;
+    file >> n_vertices;
+
     if(n_vertices <= 0)
         throw "Number of vertices should be a positive integer.";
 
@@ -99,10 +107,10 @@ void Graph::construct_sat(CMSat::SATSolver& solver,
     solver.new_vars(n_vertices * n_vertices);
 
     // clauses that guarantees that every vertex is visited during the path
-    for (int vertex = 0; vertex < n_vertices; vertex++)
+    for (size_t vertex = 0; vertex < n_vertices; vertex++)
     {
         clause.clear();
-        for (int ith = 0; ith < n_vertices; ith++)
+        for (size_t ith = 0; ith < n_vertices; ith++)
         {
             int var_id = get_var_id(ith, vertex);
             clause.push_back(CMSat::Lit(var_id, false));
@@ -111,11 +119,11 @@ void Graph::construct_sat(CMSat::SATSolver& solver,
     }
 
     // adds clauses such that each index i in [n_vertices] is occupied precisely once
-    for (int ith = 0; ith < n_vertices; ith++)
+    for (size_t ith = 0; ith < n_vertices; ith++)
     {
         // adds clause x_i_0 or x_i_1 or ... or x_i_n-1
         clause.clear();
-        for (int vertex = 0; vertex < n_vertices; vertex++)
+        for (size_t vertex = 0; vertex < n_vertices; vertex++)
         {
             int var_id = get_var_id(ith, vertex);
             clause.push_back(CMSat::Lit(var_id, false));
@@ -123,10 +131,10 @@ void Graph::construct_sat(CMSat::SATSolver& solver,
         solver.add_clause(clause);
 
         // adds clauses !x_i_j or !x_i_k for every j and every k such that j != k
-        for (int vertex_1 = 0; vertex_1 < n_vertices; vertex_1++)
+        for (size_t vertex_1 = 0; vertex_1 < n_vertices; vertex_1++)
         {
             int var_id_1 = get_var_id(ith, vertex_1);
-            for (int vertex_2 = vertex_1 + 1; vertex_2 < n_vertices; vertex_2++)
+            for (size_t vertex_2 = vertex_1 + 1; vertex_2 < n_vertices; vertex_2++)
             {
                 clause.clear();
                 int var_id_2 = get_var_id(ith, vertex_2);
@@ -138,9 +146,9 @@ void Graph::construct_sat(CMSat::SATSolver& solver,
     }
 
     // adds clauses so that x_i_j and x_i+1_k => there is an edge from j to k
-    for (int ith = 0; ith < n_vertices - 1; ith++)
+    for (size_t ith = 0; ith < n_vertices - 1; ith++)
     {
-        for (int vertex = 0; vertex < n_vertices; vertex++)
+        for (size_t vertex = 0; vertex < n_vertices; vertex++)
         {
             int var_id = get_var_id(ith, vertex);
             clause.clear();
@@ -164,7 +172,7 @@ void Graph::construct_sat(CMSat::SATSolver& solver,
 
     // add diamonds clauses
     for(auto vi_vj : diamonds){
-        for(int ith = 0; ith < n_vertices; ith++){
+        for(size_t ith = 0; ith < n_vertices; ith++){
             clause.clear();
             
             int vi_id = get_var_id(ith, vi_vj.first);
@@ -187,7 +195,7 @@ std::vector<int>& Graph::get_path(CMSat::SATSolver& solver, bool cycle, int firs
     path.resize(n_vertices);
     path[0] = first_id;
     int cur = first_id;
-    for (int ith = 1; ith < n_vertices; ith++)
+    for (size_t ith = 1; ith < n_vertices; ith++)
     {
         for(int neighbor : adj_list[cur]){
             int var_id = get_var_id(ith, neighbor);
@@ -233,7 +241,7 @@ Graph::hamiltonian_path_sat(int source,
 
         //Banning found solution
         std::vector<CMSat::Lit> ban_solution;
-        for (uint32_t var = 0; var < solver.nVars(); var++) {
+        for (size_t var = 0; var < solver.nVars(); var++) {
             if (solver.get_model()[var] != CMSat::l_Undef) {
                 ban_solution.push_back(
                         CMSat::Lit(var, (solver.get_model()[var] == CMSat::l_True)? true : false));
@@ -245,18 +253,26 @@ Graph::hamiltonian_path_sat(int source,
     return paths;
 }
 
-std::vector< std::vector<int> >& Graph::hamiltonian_cycle_sat(bool count)
+std::vector< std::vector<int> >&
+Graph::hamiltonian_cycle_sat(bool count,
+                             const std::vector< std::pair<int,int> >& map,
+                             const std::vector< std::pair<int,int> >& diamonds)
 {
     paths.clear();
+    CMSat::SATSolver solver;
+    construct_sat(solver, map, diamonds);
+
+    // find the vertex with minimum outer degree
     int least_degree = INT_MAX;
     int vertex_id = 0;
-    for (int v = 0; v < n_vertices; v++)
+    for (size_t v = 0; v < n_vertices; v++)
         if (adj_list[v].size() < least_degree)
         {
             least_degree = static_cast<int>(adj_list[v].size());
             vertex_id = v;
         }
 
+    // 
     for (int source : adj_list[vertex_id])
     {
         int source_id = get_var_id(0, source);
@@ -265,9 +281,6 @@ std::vector< std::vector<int> >& Graph::hamiltonian_cycle_sat(bool count)
         std::vector<CMSat::Lit> assumptions;
         assumptions.push_back(CMSat::Lit(source_id, false));
         assumptions.push_back(CMSat::Lit(last_id, false));
-
-        CMSat::SATSolver solver;
-        construct_sat(solver);
 
         while(true) {
             CMSat::lbool ret = solver.solve(&assumptions);
@@ -281,7 +294,7 @@ std::vector< std::vector<int> >& Graph::hamiltonian_cycle_sat(bool count)
 
             //Banning found solution
             std::vector<CMSat::Lit> ban_solution;
-            for (uint32_t var = 0; var < solver.nVars(); var++) {
+            for (size_t var = 0; var < solver.nVars(); var++) {
                 if (solver.get_model()[var] != CMSat::l_Undef) {
                     ban_solution.push_back(
                             CMSat::Lit(var, (solver.get_model()[var] == CMSat::l_True)? true : false));
@@ -296,22 +309,35 @@ std::vector< std::vector<int> >& Graph::hamiltonian_cycle_sat(bool count)
     return paths;
 }
 
-std::vector< std::vector<int> >& Graph::hamiltonian_path_bt(int source, int last, bool count)
+std::vector< std::vector<int> >& Graph::hamiltonian_path_bt(int source,
+                                                     int last,
+                                                     bool count,
+                                                     const std::vector< std::pair<int,int> >& map,
+                                                     const std::vector< std::pair<int,int> >& diamonds)
 {
     paths.clear();
     visited.assign(n_vertices, false);
     path.resize(n_vertices);
 
     backtracking(source, 0, last, false, count);
+    
+    std::vector< std::vector<int> > valid_paths;
+    for(auto candidate : paths)
+        if(valid(candidate, map, diamonds)) valid_paths.push_back(candidate);
+    paths = valid_paths;
+
     return paths;
 }
 
-std::vector< std::vector<int> >& Graph::hamiltonian_cycle_bt(bool count)
+std::vector< std::vector<int> >&
+Graph::hamiltonian_cycle_bt(bool count,
+                            const std::vector< std::pair<int,int> >& map,
+                            const std::vector< std::pair<int,int> >& diamonds)
 {   
     paths.clear();
     int least_degree = INT_MAX;
     int vertex_id = 0;
-    for (int v = 0; v < n_vertices; v++)
+    for (size_t v = 0; v < n_vertices; v++)
         if (adj_list[v].size() < least_degree)
         {
             least_degree = static_cast<int>(adj_list[v].size());
@@ -324,6 +350,11 @@ std::vector< std::vector<int> >& Graph::hamiltonian_cycle_bt(bool count)
         backtracking(source, 0, vertex_id, true, count);
         if(!count && !paths.empty())  break;
     }
+
+    std::vector< std::vector<int> > valid_paths;
+    for(auto candidate : paths)
+        if(valid(candidate, map, diamonds)) valid_paths.push_back(candidate);
+    paths = valid_paths;
 
     return paths;
 }
@@ -339,16 +370,16 @@ Graph::hamiltonian_path(int source,
     if(source < 0 || source >= n_vertices || last < 0 || last >= n_vertices)
         throw "Invalid source or destination for hamiltonian path."; 
   
-    if (sat)
-        return hamiltonian_path_sat(source, last, count, map, diamonds);
-    else
-        return hamiltonian_path_bt(source, last, count);
+    if (sat)    return hamiltonian_path_sat(source, last, count, map, diamonds);
+    else    return hamiltonian_path_bt(source, last, count, map, diamonds);
 }
 
-std::vector< std::vector<int> >& Graph::hamiltonian_cycle(bool sat, bool count)
+std::vector< std::vector<int> >&
+Graph::hamiltonian_cycle(bool sat,
+                         bool count,
+                         const std::vector< std::pair<int,int> >& map,
+                         const std::vector< std::pair<int,int> >& diamonds)
 {
-    if (sat)
-        return hamiltonian_cycle_sat(count);
-    else
-        return hamiltonian_cycle_bt(count);
+    if (sat)    return hamiltonian_cycle_sat(count, map, diamonds);
+    else    return hamiltonian_cycle_bt(count, map, diamonds);
 }
