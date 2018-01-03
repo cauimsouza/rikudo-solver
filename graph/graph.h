@@ -192,6 +192,18 @@ public:
     Graph(const std::vector< std::vector<int> >& adj_list);
 
     /**
+     * @brief Returns the number of vertices in the graph 
+     * @return number of vertices in the graph
+     */
+    int get_n_vertices();
+
+    /**
+     * @brief Returns adjacence list of the graph
+     * @return adjacence list of the graph
+     */
+    const std::vector< std::vector<int> > get_adj_list();
+
+    /**
      * @brief Finds existing hamiltonian paths in the graph
      * @details The user can specify the method used internally to find hamiltonian paths.
      * Two options are offered: using a SAT solver or a backtracking algorithm.
@@ -224,6 +236,12 @@ public:
                                                        bool count,
                                                        const std::vector< std::pair<int,int> >& map = {},
                                                        const std::vector< std::pair<int,int> >& diamonds = {});
+
+    std:: vector< std::vector<int> >& k_paths(int k,
+                                              int source,
+                                              int last,
+                                              const std::vector< std::pair<int, int> >& map,
+                                              const std::vector< std::pair<int, int> >& diamonds);
 };
 
 #endif //RIKUDOSOLVER_GRAPH_H

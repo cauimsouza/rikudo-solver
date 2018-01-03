@@ -1,7 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <cstdlib>
 #include "graph.h"
+
 
 
 /**
@@ -10,11 +12,30 @@
  * @param path a vector of integers representing the vertices visited in order in the path
  * @param ofile output stream to print the file
  */
-void print_path(const std::vector<int>& path, std::ofstream &ofile){
-    ofile << path[0];
-    for(int i = 1; i < path.size(); i++)
-        ofile << " -> " << path[i];
-    ofile << "\n";
+void print_path(const std::vector<int>& path,
+                std::ofstream &ofile,
+                const std::vector< std::pair<int, int> >& maps = {},
+                const std::vector< std::pair<int, int> >& diamonds = {},
+                bool conditions = false){
+    if(path.size() < 1){
+        ofile << "-1\n";
+        return;
+    }
+
+    for(size_t i = 0; i < path.size(); i++) ofile << path[i] << "\n";
+    ofile << "-1\n";
+
+    if(conditions){
+        for(auto pair : maps){
+            ofile << pair.first << " " << pair.second << "\n";
+        }
+        ofile << "-1\n";
+
+        for(auto pair : diamonds){
+            ofile << pair.first << " " << pair.second << "\n";
+        }
+        ofile << "-1\n";
+    }
 }
 
 /**
@@ -70,7 +91,7 @@ void count_path_between_corners(int n){
  * @param file input file from where to read the graph
  * @param file output file where to write the hamiltonian paths
  */
-void solves_rikudo(std::ifstream &ifile, std::ofstream &ofile){
+void bababoo(std::ifstream &ifile, std::ofstream &ofile){
     Graph graph(ifile);
 
     int source, destination;
@@ -139,6 +160,129 @@ void test1(){
 
     ifile.close();
     ofile.close();
+}
+
+/**
+ * @brief Checks if pair of vertices is not already in the diamonds list
+ * The order of the pair (u, v) is not important.
+ * 
+ * @param diamonds list of diamonds already inserted
+ * @param u first vertex of the new diamond
+ * @param v second vertex of the new diamond
+ * @return true iff (u, v) was not inserted in the diamonds list previously 
+ */
+bool valid_new_diamond(std::vector< std::pair<int, int> > &diamonds, int u, int v){
+    for(auto pair : diamonds)
+    {
+       if(pair.first == u && pair.second == v)  return false;
+       if(pair.first == v && pair.second == u)  return false; 
+    }
+    return true;
+}
+
+/**
+ * @brief Adds new diamond to diamonds list
+ * @details It uses the function rand() to generate a pseudo random  
+ * integer u in [0...n_vertices-1] and to generate a pseudo random 
+ * integer v in [0...out_degree(u)-1], then it checks if the pair (u, v)
+ * is already in the diamonds list. If not, then it adds this pair and returns true.
+ * Otherwise, it tries again until a maximum number of iterations is reached.   
+ * 
+ * @param graph graph from where to extract the adjacence list
+ * @param diamonds list of diamonds pre-inserted
+ * 
+ * @return true if a new diamond was successfuly inserted in the diamonds list and false otherwise
+ */
+bool new_diamond(std::vector<int> &path, std::vector< std::pair<int, int> > &diamonds)
+{
+    int n_vertices = path.size();
+
+    for(uint64_t iter = 0; iter < n_vertices * n_vertices; iter++){
+        int ith = rand() % (n_vertices-1);
+
+        if(valid_new_diamond(diamonds, path[ith], path[ith+1])){
+            diamonds.push_back(std::make_pair(path[ith], path[ith+1]));
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ * @brief Checks if map is already in the maps list
+ * 
+ * @param maps list of maps already inserted
+ * @param ith instant of visit
+ * @param u vertex visited
+ * @return true iff (ith, u) was not already inserted in the maps list previously 
+ */
+bool valid_new_map(std::vector< std::pair<int, int> > &maps, int ith, int u)
+{
+    for(auto pair : maps){
+        if(pair.first == ith || pair.second == u)   return false;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Adds new map to maps list
+ * @details It uses the function rand() to generate a pseudo random  
+ * integer u in [0...n_vertices-1] and to generate a pseudo random 
+ * integer ith in [0...n_vertices-1], then it checks if the pair (ith, u)
+ * is already in the maps list. If not, then it adds this pair and returns true.
+ * Otherwise, it tries again until a maximum number of iterations is reached.   
+ * 
+ * @param graph graph from where to extract the adjacence list
+ * @param maps list of maps pre-inserted
+ * 
+ * @return true if a new map was successfuly inserted in the maps list and false otherwise
+ */
+bool new_map(std::vector<int> &path, std::vector< std::pair<int, int> > &maps)
+{
+    uint32_t n_vertices = path.size();
+    for(uint64_t iter = 0; iter < n_vertices * n_vertices; iter++){
+        int ith = rand() % (n_vertices - 2) + 1;
+        if(valid_new_map(maps, ith, path[ith])){
+            maps.push_back(std::make_pair(ith, path[ith]));
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+void solves_rikudo(std::ifstream &ifile, std::ofstream &ofile)
+{
+    Graph graph(ifile);
+
+    int begin, end;
+    ifile >> begin >> end;
+
+    std::vector< std::pair<int, int> > diamonds;
+    std::vector< std::pair<int, int> > maps;
+
+    uint32_t MAX_ITER = 100000;
+    for(uint32_t iter = 0; iter < MAX_ITER; iter++){
+        auto paths = graph.k_paths(2, begin, end, maps, diamonds);
+        
+        // there exists at least two solutions, then we need to add constraint
+        if(paths.size() == 2){
+            int coin = rand() & 1;
+            // add diamond constraint if coin == 0
+            if(coin == 0)   new_diamond(paths[0], diamonds);
+            else    new_map(paths[0], maps);
+        }
+
+        // there exists only one solution, print it to output file and return
+        else if(paths.size() == 1){
+            print_path(paths[0], ofile, maps, diamonds, true);
+            return;
+        }      
+    }
 }
 
 int main(int argc, char const *argv[])

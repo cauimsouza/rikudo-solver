@@ -46,8 +46,8 @@ bool Graph::backtracking(int v,
 
 bool Graph::valid(const std::vector<int> &candidate,
                   const std::vector< std::pair<int,int> >& map,
-                  const std::vector< std::pair<int,int> >& diamonds){
-    
+                  const std::vector< std::pair<int,int> >& diamonds)
+{    
     for(auto pair : map){
         int ith = pair.first;
         int vertex = pair.second;
@@ -97,6 +97,15 @@ Graph::Graph(std::ifstream &file)
 Graph::Graph(const std::vector< std::vector<int> >& adj_list){
     this->adj_list = adj_list;
     n_vertices = adj_list.size();
+}
+
+int Graph::get_n_vertices(){
+    return n_vertices;
+}
+
+const std::vector< std::vector<int> > Graph::get_adj_list()
+{
+    return adj_list;
 }
 
 void Graph::construct_sat(CMSat::SATSolver& solver,
@@ -382,4 +391,46 @@ Graph::hamiltonian_cycle(bool sat,
 {
     if (sat)    return hamiltonian_cycle_sat(count, map, diamonds);
     else    return hamiltonian_cycle_bt(count, map, diamonds);
+}
+
+std:: vector< std::vector<int> >&
+Graph::k_paths(int k,
+               int source,
+               int last,
+               const std::vector< std::pair<int, int> >& map,
+               const std::vector< std::pair<int, int> >& diamonds)
+{
+    CMSat::SATSolver solver;
+    construct_sat(solver, map, diamonds);
+    int source_id = get_var_id(0, source);
+    int last_id = get_var_id(n_vertices - 1, last);
+    paths.clear();
+
+    std::vector<CMSat::Lit> assumptions;
+    assumptions.push_back(CMSat::Lit(source_id, false));
+    assumptions.push_back(CMSat::Lit(last_id, false));
+
+    int solutions_found = 0;
+    while(true) {
+        CMSat::lbool ret = solver.solve(&assumptions);
+        if (ret != CMSat::l_True) {
+            //All solutions found.
+            break;
+        }
+
+        paths.push_back(get_path(solver, false, source));
+        if(paths.size() == k)   break; 
+
+        //Banning found solution
+        std::vector<CMSat::Lit> ban_solution;
+        for (size_t var = 0; var < solver.nVars(); var++) {
+            if (solver.get_model()[var] != CMSat::l_Undef) {
+                ban_solution.push_back(
+                        CMSat::Lit(var, (solver.get_model()[var] == CMSat::l_True)? true : false));
+            }
+        }
+        solver.add_clause(ban_solution);
+    }
+
+    return paths;
 }
