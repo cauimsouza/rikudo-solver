@@ -86,12 +86,15 @@ void count_path_between_corners(int n){
 
 /**
  * @brief Reads graph from file, tries to find hamiltonian paths in this graph
- * and writes to specified output the existing hamiltonian paths
+ * and writes to specified output the existing hamiltonian paths.
+ * This function is identical to solves_rikudo but is does not add any constraint
+ * to limit the number of hamiltonian paths, therefore the output file will contain all the solution
+ * and will not contain the list of diamonds/maps conditions.
  * 
  * @param file input file from where to read the graph
  * @param file output file where to write the hamiltonian paths
  */
-void bababoo(std::ifstream &ifile, std::ofstream &ofile){
+void solves_rikudo_all_paths(std::ifstream &ifile, std::ofstream &ofile){
     Graph graph(ifile);
 
     int source, destination;
@@ -100,7 +103,6 @@ void bababoo(std::ifstream &ifile, std::ofstream &ofile){
     auto paths = graph.hamiltonian_path(source, destination, true, true);
     for(auto path : paths){
         print_path(path, ofile);
-        break;
     }
 }
 
@@ -181,14 +183,9 @@ bool valid_new_diamond(std::vector< std::pair<int, int> > &diamonds, int u, int 
 }
 
 /**
- * @brief Adds new diamond to diamonds list
- * @details It uses the function rand() to generate a pseudo random  
- * integer u in [0...n_vertices-1] and to generate a pseudo random 
- * integer v in [0...out_degree(u)-1], then it checks if the pair (u, v)
- * is already in the diamonds list. If not, then it adds this pair and returns true.
- * Otherwise, it tries again until a maximum number of iterations is reached.   
+ * @brief Adds new diamond to diamonds list that is compatible with given path
  * 
- * @param graph graph from where to extract the adjacence list
+ * @param path given hamiltonian path
  * @param diamonds list of diamonds pre-inserted
  * 
  * @return true if a new diamond was successfuly inserted in the diamonds list and false otherwise
@@ -228,14 +225,9 @@ bool valid_new_map(std::vector< std::pair<int, int> > &maps, int ith, int u)
 }
 
 /**
- * @brief Adds new map to maps list
- * @details It uses the function rand() to generate a pseudo random  
- * integer u in [0...n_vertices-1] and to generate a pseudo random 
- * integer ith in [0...n_vertices-1], then it checks if the pair (ith, u)
- * is already in the maps list. If not, then it adds this pair and returns true.
- * Otherwise, it tries again until a maximum number of iterations is reached.   
+ * @brief Adds new map to maps list that is compatible with given path   
  * 
- * @param graph graph from where to extract the adjacence list
+ * @param path given hamiltonian path
  * @param maps list of maps pre-inserted
  * 
  * @return true if a new map was successfuly inserted in the maps list and false otherwise
@@ -254,7 +246,41 @@ bool new_map(std::vector<int> &path, std::vector< std::pair<int, int> > &maps)
     return false;
 }
 
-
+/**
+ * @brief Reads a description of a graph from an input file and finds contraints so that
+ * an unique hamiltonian path from a source to an origin exists and writes this path
+ * as well as these constraints to an output file.
+ * @details The input file must be in the following format (the indication in the right
+ * are just for clarification and must not be included in the file):
+ * ----input.txt----
+ * 4 <- number of vertices
+ * 0 1 <-oriented edge in the graph
+ * 0 2 <-oriented edge in the graph
+ * 1 2 <-oriented edge in the graph
+ * 2 1 <-oriented edge in the graph
+ * 1 3 <-oriented edge in the graph
+ * 3 1 <-oriented edge in the graph
+ * -1 <- marks the end of the input file
+ * ----input.txt---
+ * The output file will be in the following format (the indication in the right
+ * are just for clarification and will not be included in the file):
+ * ----output.txt----
+ * 0 <-first vertex in the path
+ * 2 <-second vertex in the path
+ * 1 <-third vertex in the path
+ * 3 <-fourth vertex in the path
+ * -1 <-marks the end of the path
+ * 1 2 <- the 1-st vertex in the path should be vertex 2
+ * -1 <- marks the end of the list of maps conditions
+ * 0 2 <- the vertex following vertex 0 in the path should be following 2
+ * -1 <-marks the end of the list of diamond conditions
+ * ----output.txt---
+ * 
+ * @param ifile input file from where to read the description of the graph
+ * as well as the source and the origin of the desired hamiltonian path
+ * @param ofile output file where to write the unique hamiltonian path and
+ * the conditions imposed to this graph that make this path unique. 
+ */
 void solves_rikudo(std::ifstream &ifile, std::ofstream &ofile)
 {
     Graph graph(ifile);

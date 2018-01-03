@@ -236,7 +236,20 @@ public:
                                                        bool count,
                                                        const std::vector< std::pair<int,int> >& map = {},
                                                        const std::vector< std::pair<int,int> >& diamonds = {});
-
+    /**
+     * @brief Returns all up to k hamiltonian paths from source to last in the graph
+     * 
+     * @param k maximum number of hamiltonian paths to be returned
+     * @param source source of the hamiltonian paths
+     * @param last destination of the hamiltonian paths
+     * @param map list of pairs of integers of the form (i, v) representing
+     * the condition "vertex v must be visited at instant i"
+     * @param diamonds list of diamonds in the form of a list of pairs of integers of the form (u, v) representing
+     * the condition "vertex v and vertex u must be visited consecutively, in any order"
+     * @return a list of all the distinct hamiltonian paths from the source to the last vertex considering
+     * the constraints imposed by the maps and the diamonds. If more than k paths exist, only the first
+     * k paths found will be returned
+     */
     std:: vector< std::vector<int> >& k_paths(int k,
                                               int source,
                                               int last,
