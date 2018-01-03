@@ -97,10 +97,21 @@ class Image2dViewer extends JFrame {
 	public Image2dViewer(Image2d img) {
 		this.img = img;
 		this.setLocation(xLocation, 0);
+		
+		this.setTitle("Rikudo Solver");
+		
+		// what happens when the frame closes
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		// create component and put it in the frame
 		add(new Image2dComponent(img));
+		
+		// size the frame
 		pack();
+		
+		// show it
 		setVisible(true);
+		
 		xLocation += img.getWidth();
 	}
 }
@@ -119,9 +130,11 @@ class Image2dComponent extends JComponent {
 	public void paint(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
 
-		// set the background color
+		// get dimensions of intern panel
 		Dimension d = getSize();
+		// set the background color
 		g2.setBackground(Color.white);
+		// clean the window
 		g2.clearRect(0, 0, d.width, d.height);
 		
 		// set the font
@@ -147,10 +160,12 @@ class Image2dComponent extends JComponent {
 		}
 		
 		// draw the texts
+		g2.setColor(Color.RED);
 		synchronized (img.getTexts()) {
 			for (Text text : img.getTexts()) {
 				g2.drawString(text.label, text.x - 15, text.y+10);
 			}
 		}
+		
 	}
 }

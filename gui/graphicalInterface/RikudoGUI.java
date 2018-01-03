@@ -139,13 +139,15 @@ public class RikudoGUI {
 		}
 	}
 	
-	private void printLabels(Image2d img, List<Integer> vertices) {
-		ListIterator<Integer> it = path.listIterator();
-		while(it.hasNext()) {
-			int vertex = it.next();
-			Offset offset = intToAxial.get(vertex).toOffset(100);
-			img.addText(new Text(Integer.toString(vertex), (float) offset.x, (float) offset.y));
+	private void printLabels(Image2d img, List<Integer> path) {
+		for(int i = 0; i < path.size(); i++) {
+			printLabel(img, path.get(i), Integer.toString(i+1));
 		}
+	}
+	
+	private void printLabel(Image2d img, int vertex, String string) {
+		Offset offset = intToAxial.get(vertex).toOffset(100);
+		img.addText(new Text(string, offset.x, offset.y));
 	}
 }
 
