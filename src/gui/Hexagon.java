@@ -17,7 +17,7 @@ public class Hexagon extends Polygon {
 	}
 	
 	public Hexagon(int xcenter, int ycenter) {
-		this(xcenter, ycenter, 100);
+		this(xcenter, ycenter, 50);
 	}
 	
 	public Hexagon(Offset offset, int size) {

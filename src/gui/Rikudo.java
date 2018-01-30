@@ -1,6 +1,6 @@
 import java.awt.Color;
 
-public class testImage2d {
+public class Rikudo {
 	public static void main(String[] args) {
 		/*Image2d img = new Image2d(1024);
 		//img.addPolygon(new int[] {50,100,150,200}, new int[] {50,150,200,100}, Color.BLUE, Color.RED);
@@ -17,6 +17,6 @@ public class testImage2d {
 		
 		img.addSegment(50, 200, 150, 100, 10, Color.GREEN);
 		new Image2dViewer(img);	*/
-		new RikudoGUI().draw();
+		new SolverInterface().draw();
 	}
 }

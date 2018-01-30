@@ -1,6 +1,5 @@
 CXX=g++
-CFLAGS=-std=c++11 -c
-LDFLAGS=-lcryptominisat5
+CFLAGS=-std=c++11 -c 
 SOURCES=main.cpp graph.cpp
 DEPS=graph.h
 OBJECTS=$(SOURCES:.cpp=.o)

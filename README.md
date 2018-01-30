@@ -1,1 +1,0 @@
-# rikudo-solver

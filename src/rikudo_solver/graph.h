@@ -6,7 +6,10 @@
 #define RIKUDOSOLVER_GRAPH_H
 
 #include <vector>
-#include <cryptominisat5/cryptominisat.h>
+#include <fstream>
+
+
+std::string get_path(std::string file_name);
 
 
 class Graph
@@ -16,6 +19,9 @@ private:
      * number of vertices in the graph
      */
     int n_vertices; 
+
+    std::vector<int> dist_s;
+    std::vector<int> dist_t;    
 
     /**
      * adjacence list of the graph
@@ -52,7 +58,9 @@ private:
      * 
      * @return index of the corresponding propositional variable
      */
-    int get_var_id(int ith, int vertex);
+    int encode(int ith, int vertex, bool offset=false);
+
+    void decode(int var, int &i, int &v);
 
     /**
      * @brief Recursive function that tries to find hamiltonian paths in the graph
@@ -61,12 +69,11 @@ private:
      * @param v index of current vertex
      * @param n number of vertices already visited
      * @param last last vertex in the path
-     * @param cycle whether or not last vertex is equal to the first vertex in the path
      * @param count true if we are counting the total number of existing hamiltonian paths
      * @return true if there is a hamiltonian path ending at vertex 'last' and
      * whose 'n'-th visited vertex is 'v' 
      */
-    bool backtracking(int v, int n, int last, bool cycle, bool count);
+    bool backtracking(int v, int n, int last, bool count);
 
     /**
      * @brief Checks if given candidate path is a valid path
@@ -96,11 +103,11 @@ private:
      * @return list of paths possibly empty
      */
     std::vector< std::vector<int> >&
-    hamiltonian_path_sat(int source,
-                         int last,
-                         bool count,
-                         const std::vector< std::pair<int,int> >& map,
-                         const std::vector< std::pair<int,int> >& diamonds);
+    ham_path_sat(int source,
+                 int last,
+                 bool count,
+                 const std::vector< std::pair<int,int> >& map,
+                 const std::vector< std::pair<int,int> >& diamonds);
 
     /**
      * @brief returns a vector of hamiltonian cycles
@@ -108,9 +115,9 @@ private:
      * @param count whether to count the total number of exinting cycles or not
      * @return list of cycles possibly empty
      */
-    std::vector< std::vector<int> >& hamiltonian_cycle_sat(bool count,
-                                                           const std::vector< std::pair<int,int> >& map,
-                                                           const std::vector< std::pair<int,int> >& diamonds);
+    std::vector< std::vector<int> >& ham_cycle_sat(bool count,
+                                                       const std::vector< std::pair<int,int> >& map,
+                                                       const std::vector< std::pair<int,int> >& diamonds);
 
     /**
      * @brief returns a vector of hamiltonian paths
@@ -125,11 +132,11 @@ private:
      * the condition "vertex v and vertex u must be visited consecutively, in any order" 
      * @return list of paths if any exists
      */
-    std::vector< std::vector<int> >& hamiltonian_path_bt(int source,
-                                                         int last,
-                                                         bool count,
-                                                         const std::vector< std::pair<int,int> >& map,
-                                                         const std::vector< std::pair<int,int> >& diamonds);
+    std::vector< std::vector<int> >& ham_path_bt(int source,
+                                                 int last,
+                                                 bool count,
+                                                 const std::vector< std::pair<int,int> >& map,
+                                                 const std::vector< std::pair<int,int> >& diamonds);
 
     /**
      * @brief returns a vector of hamiltonian cycles
@@ -142,9 +149,41 @@ private:
      * the condition "vertex v and vertex u must be visited consecutively, in any order" 
      * @return list of cycles if any exists, the first and the last vertices will be the same
      */
-    std::vector< std::vector<int> >& hamiltonian_cycle_bt(bool count,
-                                                          const std::vector< std::pair<int,int> >& map,
-                                                          const std::vector< std::pair<int,int> >& diamonds);
+    std::vector< std::vector<int> >& ham_cycle_bt(bool count,
+                                                  const std::vector< std::pair<int,int> >& map,
+                                                  const std::vector< std::pair<int,int> >& diamonds);
+
+    
+
+    
+
+    
+    std::string create_ban(std::vector<int> &orig_path);
+    void extend_sat(std::string s, int &n_vars, int &n_clauses);
+    std::vector<int> create_cons(int n_vertices);
+    void recopy(int n_vars, int n_clauses);
+    void add_cons(std::vector<int>& orig_path, std::vector<int>& cons, int pos);
+    std::string diam_s(int u, int v, int n_vertices);
+    void write_min_cons(std::vector<int>& orig_path, std::vector<int>& cons, int num, std::ofstream &ofile);
+    void condition1(std::vector< std::vector<int> > &clauses);
+    void condition2(std::vector< std::vector<int> > &clauses);
+    void condition3(std::vector< std::vector<int> > &clauses);
+    void condition4(std::vector< std::vector<int> > &clauses);
+    void condition5(std::vector< std::vector<int> > &clauses);
+    void condition6(std::vector< std::vector<int> > &clauses,
+        const std::vector< std::pair<int,int> >& map);
+    void condition7(std::vector< std::vector<int> > &clauses,
+        const std::vector< std::pair<int,int> >& diamonds);
+    void condition8(std::vector< std::vector<int> > &clauses);
+    void condition9(std::vector< std::vector<int> > &clauses);
+    void condition10(std::vector< std::vector<int> > &clauses);
+    void condition11(std::vector< std::vector<int> > &clauses, int source);
+    void condition12(std::vector< std::vector<int> > &clauses, int dest);
+    void condition13(std::vector< std::vector<int> > &clauses, int source);
+    void condition14(std::vector< std::vector<int> > &clauses, int dest);
+    void write_sat(std::vector<std::vector<int> > &clauses);
+
+public:
 
     /**
      * @brief Constructs SAT expression representing a hamiltonian path/cycle 
@@ -155,7 +194,7 @@ private:
      * @param diamonds list of diamonds in the form of a list of pairs of integers of the form (u, v) representing
      * the condition "vertex v and vertex u must be visited consecutively, in any order"
      */
-    void construct_sat(CMSat::SATSolver& solver,
+    void construct_sat(int source, int dest,
                        const std::vector< std::pair<int,int> >& map = {},
                        const std::vector< std::pair<int,int> >& diamonds = {});
 
@@ -167,9 +206,9 @@ private:
      * @param first_id first vertex in the path
      * @return list of vertices in the path in order
      */
-    std::vector<int>& get_path(CMSat::SATSolver& solver, bool cycle = false, int first_id = 0);
+    std::vector<int>& read_sol();
 
-public:
+    void solve_sat();
     /**
      * @brief Reads graph structure from file 
      * @details The first line in the file must be the number of vertices.
@@ -215,12 +254,12 @@ public:
      * @param count whether to count the total number of existing hamiltonian paths or not.
      * @return list of paths
      */
-    std::vector< std::vector<int> >& hamiltonian_path(int source,
-                                                      int last,
-                                                      bool sat,
-                                                      bool count,
-                                                      const std::vector< std::pair<int,int> >& map = {},
-                                                      const std::vector< std::pair<int,int> >& diamonds = {});
+    std::vector< std::vector<int> >& ham_path(int source,
+                                              int last,
+                                              bool sat=true,
+                                              bool count=false,
+                                              const std::vector< std::pair<int,int> >& map = {},
+                                              const std::vector< std::pair<int,int> >& diamonds = {});
 
     /**
      * @brief Finds existing hamiltonian cycles in the graph
@@ -232,10 +271,10 @@ public:
      * @param count whether to count the total number of existing hamiltonian cycles or not.
      * @return list of cycles
      */
-    std::vector< std::vector<int> >& hamiltonian_cycle(bool sat,
-                                                       bool count,
-                                                       const std::vector< std::pair<int,int> >& map = {},
-                                                       const std::vector< std::pair<int,int> >& diamonds = {});
+    std::vector< std::vector<int> >& ham_cycle(bool sat=true,
+                                               bool count=false,
+                                               const std::vector< std::pair<int,int> >& map = {},
+                                               const std::vector< std::pair<int,int> >& diamonds = {});
     /**
      * @brief Returns all up to k hamiltonian paths from source to last in the graph
      * 
@@ -250,11 +289,13 @@ public:
      * the constraints imposed by the maps and the diamonds. If more than k paths exist, only the first
      * k paths found will be returned
      */
-    std:: vector< std::vector<int> >& k_paths(int k,
+    std::vector<int>& k_paths(int k,
                                               int source,
                                               int last,
                                               const std::vector< std::pair<int, int> >& map,
                                               const std::vector< std::pair<int, int> >& diamonds);
+
+    void unique_sol(int first, int last, std::ofstream &ofile);
 };
 
 #endif //RIKUDOSOLVER_GRAPH_H
