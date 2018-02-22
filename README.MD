@@ -1,6 +1,41 @@
-Java 1.9 is required
+# Rikudo puzzle generator and solver
 
-To run the program, put a binary image with the name "input.png" in this directory,
-and execute '$ sudo bash run.sh' in the shell.
+<img src="https://github.com/cauimsouza/rikudo-solver/blob/master/media/title-image.png" alt="Rikudo view" >
 
-Examples of binary images can be found in the folder "binaryImages".
+Rikudo is a game where the goal of the player is to find a path (numbering) of adjacent cells in an hex grid, given that some cells are already numbered and some pairs of cells must be consecutive in the path (http://www.rikudo.fr). Given a black and white image, the code: 
+(i) creates a hex grid of approximately the same format 
+(ii) generates a rikudo puzzle with minimal constraints such that the solution is unique 
+(iii) outputs the solution
+
+## Authors
+
+Cauim de Souza Lima  
+Victor Hugo Vianna
+
+## Prerequisites
+
+Java 1.9 for the GUI
+
+## Instructions
+
+Add a black and white image with the name "input.png" to the directory and run
+
+```
+$ sudo bash run.sh
+```
+
+You will be given an image of the board and will be asked to choose starting and ending vertices. If there is no possible solution, you will be asked to provide other ones. If there is one, program will output the puzzle with minimal constraints and the solution. Just close all windows to finish.
+
+## Example of results
+
+<img src="https://github.com/cauimsouza/rikudo-solver/blob/master/media/example.png" alt="Input">
+
+## Main ideas
+
+SAT-solver for finding hamiltonian paths, with well-chosen clauses to reduce running time (sometimes redundant clauses can help)  
+Finding a base solution and using binary search to find set of constraints that enforce such solution
+
+## Acknowledgments
+
+https://github.com/msoos/cryptominisat (SAT-solver used)
+
