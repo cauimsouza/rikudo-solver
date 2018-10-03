@@ -18,13 +18,17 @@ Java 1.9 for the GUI
 
 ## Instructions
 
-Add a black and white image with the name "input.png" to the directory and run
+To compile open a shell and run
+```
+$ make
+```
+Then, add a black and white image with the name "input.png" to the directory and execute
 
 ```
-$ sudo bash run.sh
+$ ./run.sh
 ```
 
-You will be given an image of the board and will be asked to choose starting and ending vertices. If there is no possible solution, you will be asked to provide other ones. If there is one, program will output the puzzle with minimal constraints and the solution. Just close all windows to finish.
+You will be given an image of the board and will be asked to choose starting and ending vertices for your path. If there is no possible solution for this choice, you'll be asked to provide other vertices. Otherwise, the program will output a puzzle with minimal constraints and its solution. Just close all windows to finish. [Notice that for the Christmas Tree example, the only vertices with a possible hamiltonian path are 1 and 63, as they both have degree 1!] Have fun :)
 
 ## Example of results
 

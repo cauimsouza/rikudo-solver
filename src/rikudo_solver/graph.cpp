@@ -24,7 +24,7 @@
 #define sat_input "sat_input.txt"
 #define sat_output "sat_output.txt"
 #define sat_aux_input "sat_aux_input.txt"
-#define sat_solver "cryptominisat5_simple"
+#define sat_solver "cryptominisat"
 
 
 int Graph::encode(int ith, int vertex, bool offset)
